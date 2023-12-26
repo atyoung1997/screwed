@@ -13,6 +13,8 @@ SCRYFALL_REQUEST_URL = "https://api.scryfall.com"
 test_path_1 = "C:\\Users\\atyou\\github_repos\\screwed\\testing_files\\archidekt_standard_export_1.txt"
 test_path_2 = "C:\\Users\\atyou\\github_repos\\screwed\\testing_files\\archidekt_standard_export_2.txt"
 
+
+
 def readAndFormatDecklist(input_path: str):
     with open(input_path) as deck_txt_file:
         Lines = deck_txt_file.readlines()
@@ -91,20 +93,57 @@ def noLandsDrawn(card_count: int, land_count: int, num_cards_drawn: int):
             prob = prob * (nonland_count - i) / (card_count - i)
     return prob
 
-def playLandEachTurn(card_count: int, land_count: int, turn_number: int, on_play):
-    """
-    Prob of being able to play a land each turn up till turn x, calculated by first seeing what the prob of not being able to play a land on any turn 1-X
-     - turn 1 you can't play a land if you have no lands in hand 
-     - turn 2 you can't play a land if you didn't have a land in hand turn 1 and you didn't draw a land turn 2, or if you had only 1 land in hand turn 1 
-    """
-    if on_play:
-        opening_hand_land_dist = getLandDistribution(card_count, land_count, 7)
+def missLandTurnOne(card_count: int, land_count: int, opening_hand_land_dist: pd.DataFrame):
+    # only miss turn one land if start game with 0 lands in hand
+    return opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 0]["prob"][0]
 
-        noLandTurnOne = opening_hand_land_dist["num_lands_drawn"]
-        
-        for i in range(1,turn_number+1):
-            print("helllo")
-    print("hello")
+def missLandTurnTwo(card_count: int, land_count: int, opening_hand_land_dist: pd.DataFrame):
+    # miss land turn two if you start with 1 land and don't draw a land 
+    one_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 1]["prob"][1]
+    card_count = card_count - len(opening_hand_land_dist) + 1
+    land_count = land_count - 1
+    return one_land_turn_one * (card_count - land_count) / card_count
+
+def missLandTurnThree(card_count: int, land_count: int, opening_hand_land_dist: pd.DataFrame):
+    # scenario 1: miss land turn three if you start with 1 land, draw a land turn two, but not turn three 
+    # scenario 2: you start with two lands, and don't draw a land on either turn two or three
+
+    # scenario 1 calculations - we start with an opening hand with 1 land
+    one_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 1]["prob"][1]
+    # after drawing opening hand
+    card_count_s1 = card_count - len(opening_hand_land_dist) + 1 # we've drawn the opening hand
+    land_count_s1 = land_count - 1 # one of the opening hand cards is a land
+    nonland_count_s1 = card_count_s1 - land_count_s1
+    # turn 2 draw is a land
+    prob_s1 = one_land_turn_one * (land_count_s1 / card_count_s1)
+    # after turn 2 draw
+    card_count_s1 = card_count_s1 - 1
+    land_count_s1 = land_count_s1 - 1
+    nonland_count_s1 = nonland_count_s1
+    # turn 3 draw is a nonland
+    prob_s1 = prob_s1 * (nonland_count_s1 / card_count_s1)
+
+    # scenario 2 calculations - we start with an opening hand with 2 lands
+    two_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 2]["prob"][2]
+    # after drawing opening hand
+    card_count_s2 = card_count - len(opening_hand_land_dist) + 1 # we've drawn the opening hand
+    land_count_s2 = land_count - 2 # one of the opening hand cards is a land
+    nonland_count_s2 = card_count_s2 - land_count_s2
+    # draw two nonlands in a row
+    prob_s2 = two_land_turn_one * (nonland_count_s2 / card_count_s2) * ((nonland_count_s2 - 1) / (card_count_s2 - 1))
+
+    return prob_s1 + prob_s2
+
+
+
+    two_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 2]["prob"][2]
+    card_count = card_count - len(opening_hand_land_dist) + 1
+    land_count = land_count - 2
+    return 1
+
+def playLandEachTurn(card_count: int, land_count: int, turn_number: int, on_play: bool):
+    opening_hand_size = 7 + ~on_play
+    print(opening_hand_size)
 
 
 
@@ -115,15 +154,15 @@ if __name__ == "__main__":
     card_count = getCardCount(deck_dict)
     print(f"Your deck has: {land_count} lands in it out of {card_count} total cards. This means {land_count/card_count:.0%} of your deck is made up of lands.")
     opening_hand_land_dist = getLandDistribution(card_count, land_count, 7)
-    print(noLandsDrawn(card_count, land_count, 7))
     print("Your opening hand land draw probabilities are: ")
     print(opening_hand_land_dist)
-    print(type(opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 0]["prob"][0]))
-    print(noLandsDrawn(card_count, land_count, 6))
     print("If you mull to 6 the distribution changes to this:")
     single_mull_land_dist = getLandDistribution(card_count, land_count, 6)
     print(single_mull_land_dist)
 
+    print(missLandTurnOne(card_count, land_count, opening_hand_land_dist))
+    print(missLandTurnTwo(card_count, land_count, opening_hand_land_dist))
+    print(missLandTurnThree(card_count, land_count, opening_hand_land_dist))
 
 
     #print(json.dumps(deck_dict, indent=1))
