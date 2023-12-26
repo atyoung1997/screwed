@@ -13,7 +13,7 @@ SCRYFALL_REQUEST_URL = "https://api.scryfall.com"
 test_path_1 = "C:\\Users\\atyou\\github_repos\\screwed\\testing_files\\archidekt_standard_export_1.txt"
 test_path_2 = "C:\\Users\\atyou\\github_repos\\screwed\\testing_files\\archidekt_standard_export_2.txt"
 
-def readAndFormatDecklist(input_path):
+def readAndFormatDecklist(input_path: str):
     with open(input_path) as deck_txt_file:
         Lines = deck_txt_file.readlines()
     Lines = [line.strip() for line in Lines if line.strip() != ""]
@@ -32,7 +32,7 @@ def readAndFormatDecklist(input_path):
     print(deck_dict)
     return deck_dict
 
-def retrieveScryfallData(deck_dict):
+def retrieveScryfallData(deck_dict: dict):
     for card_name in deck_dict.keys():
         request_string = f"{SCRYFALL_REQUEST_URL}/cards/named?exact={card_name.replace(" ", "+")}"
         scryfall_response = requests.get(request_string)
@@ -44,26 +44,26 @@ def retrieveScryfallData(deck_dict):
         sleep(0.075)
     return deck_dict
 
-def getLandCount(deck_dict):
+def getLandCount(deck_dict: dict):
     land_count = 0
     for card_name in deck_dict.keys():
         if re.search(r"( Land | Land$|^Land |^Land$)", deck_dict[card_name]["type_line"]):
             land_count += deck_dict[card_name]["count"]
     return land_count
 
-def getCardCount(deck_dict):
+def getCardCount(deck_dict: dict):
     card_count = 0
     for card_name in deck_dict.keys():
         card_count += deck_dict[card_name]["count"]
     return card_count
 
-def getLandDistribution(card_count, land_count, num_cards_drawn):
+def getLandDistribution(card_count: int, land_count: int, num_cards_drawn: int):
     nonland_count = card_count - land_count
     prob_list = []
     for num_lands_drawn in range(0, num_cards_drawn+1):
         prob = comb(land_count, num_lands_drawn) * comb(nonland_count, num_cards_drawn - num_lands_drawn) / comb(card_count, num_cards_drawn)
         prob_list.append(prob)
-        print(f"You have a {prob:.0%} chance to draw {num_lands_drawn} lands in {num_cards_drawn} draws.")
+
     cum_prob_list = []
     inv_cum_prob_list = []
     cum_prob = 0
@@ -80,7 +80,31 @@ def getLandDistribution(card_count, land_count, num_cards_drawn):
         }
     )
     return df
+
+def noLandsDrawn(card_count: int, land_count: int, num_cards_drawn: int):
+    nonland_count = card_count - land_count
+
+    for i in range(0, num_cards_drawn):
+        if i == 0:
+            prob = nonland_count / card_count
+        else:
+            prob = prob * (nonland_count - i) / (card_count - i)
+    return prob
+
+def playLandEachTurn(card_count: int, land_count: int, turn_number: int, on_play):
+    """
+    Prob of being able to play a land each turn up till turn x, calculated by first seeing what the prob of not being able to play a land on any turn 1-X
+     - turn 1 you can't play a land if you have no lands in hand 
+     - turn 2 you can't play a land if you didn't have a land in hand turn 1 and you didn't draw a land turn 2, or if you had only 1 land in hand turn 1 
+    """
+    if on_play:
+        opening_hand_land_dist = getLandDistribution(card_count, land_count, 7)
+
+        noLandTurnOne = opening_hand_land_dist["num_lands_drawn"]
         
+        for i in range(1,turn_number+1):
+            print("helllo")
+    print("hello")
 
 
 
@@ -90,7 +114,15 @@ if __name__ == "__main__":
     land_count = getLandCount(deck_dict)
     card_count = getCardCount(deck_dict)
     print(f"Your deck has: {land_count} lands in it out of {card_count} total cards. This means {land_count/card_count:.0%} of your deck is made up of lands.")
-    getLandDistribution(card_count, land_count, 9)
+    opening_hand_land_dist = getLandDistribution(card_count, land_count, 7)
+    print(noLandsDrawn(card_count, land_count, 7))
+    print("Your opening hand land draw probabilities are: ")
+    print(opening_hand_land_dist)
+    print(type(opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 0]["prob"][0]))
+    print(noLandsDrawn(card_count, land_count, 6))
+    print("If you mull to 6 the distribution changes to this:")
+    single_mull_land_dist = getLandDistribution(card_count, land_count, 6)
+    print(single_mull_land_dist)
 
 
 
