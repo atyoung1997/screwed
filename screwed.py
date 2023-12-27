@@ -110,36 +110,148 @@ def missLandTurnThree(card_count: int, land_count: int, opening_hand_land_dist: 
 
     # scenario 1 calculations - we start with an opening hand with 1 land
     one_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 1]["prob"][1]
-    # after drawing opening hand
     card_count_s1 = card_count - len(opening_hand_land_dist) + 1 # we've drawn the opening hand
     land_count_s1 = land_count - 1 # one of the opening hand cards is a land
     nonland_count_s1 = card_count_s1 - land_count_s1
     # turn 2 draw is a land
     prob_s1 = one_land_turn_one * (land_count_s1 / card_count_s1)
-    # after turn 2 draw
-    card_count_s1 = card_count_s1 - 1
-    land_count_s1 = land_count_s1 - 1
-    nonland_count_s1 = nonland_count_s1
+    card_count_s1 -= 1
+    land_count_s1 -= 1
     # turn 3 draw is a nonland
     prob_s1 = prob_s1 * (nonland_count_s1 / card_count_s1)
 
     # scenario 2 calculations - we start with an opening hand with 2 lands
     two_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 2]["prob"][2]
-    # after drawing opening hand
     card_count_s2 = card_count - len(opening_hand_land_dist) + 1 # we've drawn the opening hand
     land_count_s2 = land_count - 2 # one of the opening hand cards is a land
     nonland_count_s2 = card_count_s2 - land_count_s2
-    # draw two nonlands in a row
-    prob_s2 = two_land_turn_one * (nonland_count_s2 / card_count_s2) * ((nonland_count_s2 - 1) / (card_count_s2 - 1))
+    # turn 2 draw is a nonland
+    prob_s2 = two_land_turn_one * (nonland_count_s2 / card_count_s2)
+    card_count_s2 -= 1
+    nonland_count_s2 -= 1
+    # turn 3 draw is a nonland
+    prob_s2 = prob_s2 * (nonland_count_s2 / card_count_s2)
 
     return prob_s1 + prob_s2
 
+def missLandTurnFour(card_count: int, land_count: int, opening_hand_land_dist: pd.DataFrame):
+    # scenario 1: 1 land turn one and draw a land on turn two and three but not 4
+    # scenarios 2 and 3: 2 lands turn one, draw a land either turn two  or three but not four
+    # scenario 4: 3 lands turn one, dont draw a land on turn two, three of four
 
+    # scenario 1 calculations - we start with an opening hand with 1 land
+    one_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 1]["prob"][1]
+    card_count_s1 = card_count - len(opening_hand_land_dist) + 1 # we've drawn the opening hand
+    land_count_s1 = land_count - 1 # one of the opening hand cards is a land
+    nonland_count_s1 = card_count_s1 - land_count_s1
+    # turn 2 draw is a land
+    prob_s1 = one_land_turn_one * (land_count_s1 / card_count_s1)
+    card_count_s1 -= 1
+    land_count_s1 -= 1
+    # turn 3 draw is a land
+    prob_s1 = prob_s1 * (land_count_s1 / card_count_s1)
+    card_count_s1 -= 1
+    land_count_s1 -= 1
+    # turn 4 draw is a nonland
+    prob_s1 = prob_s1 * (nonland_count_s1 / card_count_s1)
+    print(prob_s1)
 
+    # scenario 2  and 3 calculations (they are the same probability)- we start with an opening hand with 2 lands
     two_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 2]["prob"][2]
-    card_count = card_count - len(opening_hand_land_dist) + 1
-    land_count = land_count - 2
-    return 1
+    card_count_s2 = card_count - len(opening_hand_land_dist) + 1 # we've drawn the opening hand
+    land_count_s2 = land_count - 2 # two of the opening hand cards are lands
+    nonland_count_s2 = card_count_s2 - land_count_s2
+    # turn two draw a land
+    prob_s2 = two_land_turn_one * (land_count_s2 / card_count_s2)
+    card_count_s2 -= 1 
+    land_count_s2 -= 1 
+    # turn 3 draw a nonland
+    prob_s2 = prob_s2 * (nonland_count_s2 / card_count_s2)
+    card_count_s2 -= 1
+    nonland_count_s2 -= 1
+    # turn 4 draw a nonland
+    prob_s2 = prob_s2 * (nonland_count_s2 / card_count_s2)
+    print(prob_s2)
+
+    # scenario 4 calculations - we start with 3 lands
+    three_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 3]["prob"][3]
+    # after drawing opening hand
+    card_count_s4 = card_count - len(opening_hand_land_dist) + 1 # we've drawn the opening hand
+    land_count_s4 = land_count - 3 # three of the opening hand cards are lands
+    nonland_count_s4 = card_count_s4 - land_count_s4
+    # turn two draw a nonland
+    prob_s4 = three_land_turn_one * (nonland_count_s4 / card_count_s4)
+    card_count_s4 -= 1 
+    nonland_count_s4 -= 1 
+    # turn 3 draw a nonland
+    prob_s4 = prob_s4 * (nonland_count_s4 / card_count_s4)
+    card_count_s4 -= 1
+    nonland_count_s4 -= 1
+    # turn 4 draw a nonland
+    prob_s4 = prob_s4 * (nonland_count_s4 / card_count_s4)
+    print(prob_s4)
+
+    return prob_s1 + (2 * prob_s2) + prob_s4
+
+def missLandTurnFive(card_count: int, land_count: int, opening_hand_land_dist: pd.DataFrame):
+    # scenario 1: 1 land turn one and draw a land on turn 2,3,4 but not 5
+    # scenario 2 and 3: 2 land turn one, draw a land on turn 2,3, or 3,4 but not 5
+    # scenario 3, 4 and 5: 3 land turn one, draw a land on turn 2, 3, or 4 but not 5
+    # scenario 6: 4 land turn one, don't draw a land on turn 2, 3, 4 or 5
+
+    # scenario 1 calculations - we start with an opening hand with 1 land
+    one_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 1]["prob"][1]
+    card_count_s1 = card_count - len(opening_hand_land_dist) + 1 # we've drawn the opening hand
+    land_count_s1 = land_count - 1 # one of the opening hand cards is a land
+    nonland_count_s1 = card_count_s1 - land_count_s1
+    # turn 2 draw is a land
+    prob_s1 = one_land_turn_one * (land_count_s1 / card_count_s1)
+    card_count_s1 -= 1
+    land_count_s1 -= 1
+    # turn 3 draw is a land
+    prob_s1 = prob_s1 * (land_count_s1 / card_count_s1)
+    card_count_s1 -= 1
+    land_count_s1 -= 1
+    # turn 4 draw is a nonland
+    prob_s1 = prob_s1 * (nonland_count_s1 / card_count_s1)
+    print(prob_s1)
+
+    # scenario 2  and 3 calculations (they are the same probability)- we start with an opening hand with 2 lands
+    two_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 2]["prob"][2]
+    card_count_s2 = card_count - len(opening_hand_land_dist) + 1 # we've drawn the opening hand
+    land_count_s2 = land_count - 2 # two of the opening hand cards are lands
+    nonland_count_s2 = card_count_s2 - land_count_s2
+    # turn two draw a land
+    prob_s2 = two_land_turn_one * (land_count_s2 / card_count_s2)
+    card_count_s2 -= 1 
+    land_count_s2 -= 1 
+    # turn 3 draw a nonland
+    prob_s2 = prob_s2 * (nonland_count_s2 / card_count_s2)
+    card_count_s2 -= 1
+    nonland_count_s2 -= 1
+    # turn 4 draw a nonland
+    prob_s2 = prob_s2 * (nonland_count_s2 / card_count_s2)
+    print(prob_s2)
+
+    # scenario 4 calculations - we start with 3 lands
+    three_land_turn_one = opening_hand_land_dist.loc[opening_hand_land_dist["num_lands_drawn"] == 3]["prob"][3]
+    # after drawing opening hand
+    card_count_s4 = card_count - len(opening_hand_land_dist) + 1 # we've drawn the opening hand
+    land_count_s4 = land_count - 3 # three of the opening hand cards are lands
+    nonland_count_s4 = card_count_s4 - land_count_s4
+    # turn two draw a nonland
+    prob_s4 = three_land_turn_one * (nonland_count_s4 / card_count_s4)
+    card_count_s4 -= 1 
+    nonland_count_s4 -= 1 
+    # turn 3 draw a nonland
+    prob_s4 = prob_s4 * (nonland_count_s4 / card_count_s4)
+    card_count_s4 -= 1
+    nonland_count_s4 -= 1
+    # turn 4 draw a nonland
+    prob_s4 = prob_s4 * (nonland_count_s4 / card_count_s4)
+    print(prob_s4)
+
+    return prob_s1 + (2 * prob_s2) + prob_s4
 
 def playLandEachTurn(card_count: int, land_count: int, turn_number: int, on_play: bool):
     opening_hand_size = 7 + ~on_play
@@ -163,6 +275,7 @@ if __name__ == "__main__":
     print(missLandTurnOne(card_count, land_count, opening_hand_land_dist))
     print(missLandTurnTwo(card_count, land_count, opening_hand_land_dist))
     print(missLandTurnThree(card_count, land_count, opening_hand_land_dist))
+    missLandTurnFour(card_count, land_count, opening_hand_land_dist)
 
 
     #print(json.dumps(deck_dict, indent=1))
