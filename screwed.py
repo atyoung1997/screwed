@@ -11,6 +11,7 @@ from math import comb
 from time import sleep
 
 SCRYFALL_REQUEST_URL = "https://api.scryfall.com"
+LAND_REGEX = r"( Land | Land$|^Land |^Land$)"
 test_path_1 = "C:\\Users\\atyou\\github_repos\\screwed\\testing_files\\archidekt_standard_export_1.txt"
 test_path_2 = "C:\\Users\\atyou\\github_repos\\screwed\\testing_files\\archidekt_standard_export_2.txt"
 
@@ -49,7 +50,7 @@ def retrieveScryfallData(deck_dict: dict):
 def getLandCount(deck_dict: dict):
     land_count = 0
     for card_name in deck_dict.keys():
-        if re.search(r"( Land | Land$|^Land |^Land$)", deck_dict[card_name]["type_line"]):
+        if re.search(LAND_REGEX, deck_dict[card_name]["type_line"]):
             land_count += deck_dict[card_name]["count"]
     return land_count
 
@@ -63,8 +64,9 @@ def getAverageCMC(deck_dict: dict):
     card_count = 0
     total_cmc = 0
     for card_name in deck_dict.keys():
-        card_count += deck_dict[card_name]["count"]
-        total_cmc += deck_dict[card_name]["cmc"] * deck_dict[card_name]["count"]
+        if not re.search(LAND_REGEX, deck_dict[card_name]["type_line"]):
+            card_count += deck_dict[card_name]["count"]
+            total_cmc += deck_dict[card_name]["cmc"] * deck_dict[card_name]["count"]
     return total_cmc / card_count
 
 
